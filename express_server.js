@@ -13,6 +13,7 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+// A link for shortening a new URL. This will be a dead link for now (href='#') as we will build the page for this functionality later.
 
 app.get("/", (req, res) => {
   res.send("Hello!");
