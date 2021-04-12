@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/calvinchan87/tinyapp-new/issues"
   },
-  "homepage": "https://github.com/calvinchan87/tinyapp-new#readme"
+  "homepage": "https://github.com/calvinchan87/tinyapp-new#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
