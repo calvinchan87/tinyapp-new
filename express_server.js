@@ -12,6 +12,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// Function logic from https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+function generateRandomString(length) {
+  let result = [];
+  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result.push(characters.charAt(Math.floor(Math.random() * charactersLength)));
+  }
+  return result.join("");
+}
+
+console.log(generateRandomString(6));
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
