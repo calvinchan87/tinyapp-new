@@ -13,7 +13,7 @@ const urlDatabase = {
 };
 
 // Function logic from https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
-function generateRandomString(length) {
+const generateRandomString = function(length) {
   let result = [];
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let charactersLength = characters.length;
@@ -21,18 +21,24 @@ function generateRandomString(length) {
     result.push(characters.charAt(Math.floor(Math.random() * charactersLength)));
   }
   return result.join("");
-}
+};
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-// Responds with a redirection to /urls/:shortURL, where shortURL is the random string we generated.
+// Responds with a redirection to /urls/:shortURL, where shortURL is the random string we generated
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
-  let shortURL = generateRandomString(6)
+  let shortURL = generateRandomString(6);
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
+});
+
+// Redirect Short URLs
+app.get("/u/:shortURL", (req, res) => {
+  let longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.get("/urls", (req, res) => {
