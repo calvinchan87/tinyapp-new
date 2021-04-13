@@ -23,15 +23,16 @@ function generateRandomString(length) {
   return result.join("");
 }
 
-console.log(generateRandomString(6));
-
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// Responds with a redirection to /urls/:shortURL, where shortURL is the random string we generated.
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  let shortURL = generateRandomString(6)
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/urls", (req, res) => {
