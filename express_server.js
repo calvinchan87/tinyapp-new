@@ -53,10 +53,20 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 // Also include a link (href='#') for creating a new url.
 
+app.post("/urls/:shortURL", (req, res) => {
+  let prefixOne = "http://";
+  let prefixTwo = "https://";
+  if (req.body.longURLedit.substr(0, prefixOne.length) !== prefixOne && req.body.longURLedit.substr(0, prefixTwo.length) !== prefixTwo) {
+    req.body.longURLedit = prefixOne + req.body.longURLedit;
+  }
+  urlDatabase[req.params.shortURL] = req.body.longURLedit;
+  res.redirect("/urls");
+});
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
-})
+});
 
 app.get("/", (req, res) => {
   res.send("Hello!");
