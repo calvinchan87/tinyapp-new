@@ -7,8 +7,11 @@ app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-const cookieParser = require("cookie-parser");
-app.use(cookieParser());
+const cookieSession = require('cookie-session');
+app.use(cookieSession({
+  name: 'session',
+  keys: ["perth", "minnesota", "holocene"]
+}));
 
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(10);
@@ -74,14 +77,14 @@ const urlsForUser = function(id) {
     }
   }
   return urlDatabaseUserSpecific;
-}
+};
 
 app.get("/urls/new", (req, res) => {
-  if (users[req.cookies.user_id] === undefined) {
+  if (users[req.session.user_id] === undefined) {
     return res.redirect("/login");
   }
   const templateVars = {
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   res.render("urls_new", templateVars);
 });
@@ -91,7 +94,7 @@ app.post("/urls", (req, res) => {
   let shortURL = generateRandomString(6);
   urlDatabase[shortURL] = {
     longURL: prefixURLIfNeeded(req.body.longURL),
-    userID: users[req.cookies.user_id].id
+    userID: users[req.session.user_id].id
   };
   res.redirect(`/urls/${shortURL}`);
 });
@@ -103,23 +106,23 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  if (users[req.cookies.user_id] === undefined) {
+  if (users[req.session.user_id] === undefined) {
     return res.status(401).send("URLs can not be displayed unless you <a href='/login'>login</a> or <a href='/register'>register</a> first.");
   }
   const templateVars = {
-    user: users[req.cookies.user_id],
-    urls: urlsForUser(users[req.cookies.user_id].id)
+    user: users[req.session.user_id],
+    urls: urlsForUser(users[req.session.user_id].id)
   };
   res.render("urls_index", templateVars);
 });
 // A link for shortening a new URL. This will be a dead link for now (href='#') as we will build the page for this functionality later.
 
 app.get("/urls/:shortURL", (req, res) => {
-  if (users[req.cookies.user_id].id !== urlDatabase[req.params.shortURL].userID) {
+  if (users[req.session.user_id].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("The details of this URL can not be accessed because it does not belong to you.");
   }
   const templateVars = {
-    user: users[req.cookies.user_id],
+    user: users[req.session.user_id],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL
   };
@@ -128,7 +131,7 @@ app.get("/urls/:shortURL", (req, res) => {
 // Also include a link (href='#') for creating a new url.
 
 app.post("/urls/:shortURL", (req, res) => {
-  if (users[req.cookies.user_id].id !== urlDatabase[req.params.shortURL].userID) {
+  if (users[req.session.user_id].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("This URL can not be edited because it does not belong to you.");
   }
   urlDatabase[req.params.shortURL].longURL = prefixURLIfNeeded(req.body.longURLedit);
@@ -136,7 +139,7 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (users[req.cookies.user_id].id !== urlDatabase[req.params.shortURL].userID) {
+  if (users[req.session.user_id].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("This URL can not be deleted because it does not belong to you.");
   }
   delete urlDatabase[req.params.shortURL];
@@ -145,7 +148,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   res.render("urls_login", templateVars);
 });
@@ -157,7 +160,7 @@ app.post("/login", (req, res) => {
   for (let user in users) {
     if (req.body.email === users[user].email) {
       if (bcrypt.compareSync(req.body.password, users[user].password)) {
-        res.cookie("user_id", users[user].id);
+        req.session.user_id = users[user].id;
         return res.redirect("/urls");
       }
     }
@@ -166,14 +169,13 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
-// req.session = null
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   res.render("urls_register", templateVars);
 });
@@ -191,7 +193,7 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, salt)
   };
-  res.cookie("user_id", userID);
+  req.session.user_id = userID;
   res.redirect("/urls");
 });
 
