@@ -15,18 +15,18 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const users = { 
+const users = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
  "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
-}
+};
 
 // Function logic from https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 const generateRandomString = function(length) {
@@ -46,10 +46,10 @@ const doesUserExistbyEmail = function(value) {
     }
   }
   return false;
-}
+};
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     user: users[req.cookies.user_id]
   };
   res.render("urls_new", templateVars);
@@ -69,7 +69,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     user: users[req.cookies.user_id],
     urls: urlDatabase
   };
@@ -103,15 +103,25 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     user: users[req.cookies.user_id]
   };
   res.render("urls_login", templateVars);
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.username);
-  res.redirect("/urls");
+  if (doesUserExistbyEmail(req.body.email) === false) {
+    return res.status(403).send("A user with this email address does not exist.");
+  }
+  for (let user in users) {
+    if (users[user].email === req.body.email) {
+      if (users[user].password === req.body.password) {
+        res.cookie("user_id", users[user].id);
+        return res.redirect("/urls");
+      }
+    }
+  }
+  res.status(403).send("The password entered does not match the one associated with this email address.");
 });
 
 app.post("/logout", (req, res) => {
@@ -120,7 +130,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     user: users[req.cookies.user_id]
   };
   res.render("urls_register", templateVars);
@@ -128,17 +138,17 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
-    return res.sendStatus(400);
-  };
-  if (doesUserExistbyEmail(req.body.email) === true) {
-    return res.sendStatus(400);
-  };
+    return res.status(400).send("Please enter a valid email address and password.");
+  }
+  if (doesUserExistbyEmail(req.body.email)) {
+    return res.status(400).send("A user already exists with this email address.");
+  }
   let userID = generateRandomString(6);
   users[userID] = {
-    id: userID, 
-    email: req.body.email, 
+    id: userID,
+    email: req.body.email,
     password: req.body.password
-  }
+  };
   res.cookie("user_id", userID);
   res.redirect("/urls");
 });
