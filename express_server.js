@@ -113,7 +113,7 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   if (users[req.cookies.user_id].id !== urlDatabase[req.params.shortURL].userID) {
-    return res.status(401).send("This URL can not be edited because it does not belong to you.");
+    return res.status(401).send("The details of this URL can not be accessed because it does not belong to you.");
   }
   const templateVars = {
     user: users[req.cookies.user_id],
@@ -125,11 +125,17 @@ app.get("/urls/:shortURL", (req, res) => {
 // Also include a link (href='#') for creating a new url.
 
 app.post("/urls/:shortURL", (req, res) => {
+  if (users[req.cookies.user_id].id !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(401).send("This URL can not be edited because it does not belong to you.");
+  }
   urlDatabase[req.params.shortURL].longURL = prefixURLIfNeeded(req.body.longURLedit);
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (users[req.cookies.user_id].id !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(401).send("This URL can not be deleted because it does not belong to you.");
+  }
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
