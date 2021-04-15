@@ -51,10 +51,10 @@ const generateRandomString = function(length) {
   return result.join("");
 };
 
-const doesUserExistbyEmail = function(value) {
-  for (let key in users) {
-    if (users[key].email === value) {
-      return true;
+const getUserByEmail = function(email, database) {
+  for (let user in database) {
+    if (email === database[user].email) {
+      return user;
     }
   }
   return false;
@@ -154,16 +154,13 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  if (!doesUserExistbyEmail(req.body.email)) {
+  let retrievedUser = getUserByEmail(req.body.email, users);
+  if (retrievedUser === false) {
     return res.status(403).send("A user with this email address does not exist.");
   }
-  for (let user in users) {
-    if (req.body.email === users[user].email) {
-      if (bcrypt.compareSync(req.body.password, users[user].password)) {
-        req.session.user_id = users[user].id;
-        return res.redirect("/urls");
-      }
-    }
+  if (bcrypt.compareSync(req.body.password, users[retrievedUser].password)) {
+    req.session.user_id = users[retrievedUser].id;
+    return res.redirect("/urls");
   }
   res.status(403).send("The password entered does not match the one associated with this email address.");
 });
@@ -184,7 +181,7 @@ app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     return res.status(400).send("Please enter a valid email address and password.");
   }
-  if (doesUserExistbyEmail(req.body.email)) {
+  if (getUserByEmail(req.body.email, users)) {
     return res.status(400).send("A user already exists with this email address.");
   }
   let userID = generateRandomString(6);
