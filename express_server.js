@@ -54,7 +54,26 @@ const doesUserExistbyEmail = function(value) {
   return false;
 };
 
-app.get("/urls/new", (req, res) => { // Only Registered Users Can Shorten URLs
+const prefixURLIfNeeded = function(url) {
+  let prefixOne = "http://";
+  let prefixTwo = "https://";
+  if (url.substr(0, prefixOne.length) !== prefixOne && url.substr(0, prefixTwo.length) !== prefixTwo) {
+    url = prefixOne + url;
+  }
+  return url;
+};
+
+const urlsForUser = function(id) {
+  let urlDatabaseUserSpecific = {};
+  for (url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      urlDatabaseUserSpecific[url] = urlDatabase[url];
+    }
+  }
+  return urlDatabaseUserSpecific;
+}
+
+app.get("/urls/new", (req, res) => {
   if (users[req.cookies.user_id] === undefined) {
     return res.redirect("/login");
   }
@@ -68,8 +87,8 @@ app.get("/urls/new", (req, res) => { // Only Registered Users Can Shorten URLs
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString(6);
   urlDatabase[shortURL] = {
-    longURL: req.body.longURL,
-    userID: "user2RandomID" // Only Registered Users Can Shorten URLs
+    longURL: prefixURLIfNeeded(req.body.longURL),
+    userID: users[req.cookies.user_id].id
   };
   res.redirect(`/urls/${shortURL}`);
 });
@@ -81,15 +100,21 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  if (users[req.cookies.user_id] === undefined) {
+    return res.status(401).send("URLs can not be displayed unless you <a href='/login'>login</a> or <a href='/register'>register</a> first.");
+  }
   const templateVars = {
     user: users[req.cookies.user_id],
-    urls: urlDatabase
+    urls: urlsForUser(users[req.cookies.user_id].id)
   };
   res.render("urls_index", templateVars);
 });
 // A link for shortening a new URL. This will be a dead link for now (href='#') as we will build the page for this functionality later.
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (users[req.cookies.user_id].id !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(401).send("This URL can not be edited because it does not belong to you.");
+  }
   const templateVars = {
     user: users[req.cookies.user_id],
     shortURL: req.params.shortURL,
@@ -100,12 +125,7 @@ app.get("/urls/:shortURL", (req, res) => {
 // Also include a link (href='#') for creating a new url.
 
 app.post("/urls/:shortURL", (req, res) => {
-  let prefixOne = "http://";
-  let prefixTwo = "https://";
-  if (req.body.longURLedit.substr(0, prefixOne.length) !== prefixOne && req.body.longURLedit.substr(0, prefixTwo.length) !== prefixTwo) {
-    req.body.longURLedit = prefixOne + req.body.longURLedit;
-  }
-  urlDatabase[req.params.shortURL].longURL = req.body.longURLedit;
+  urlDatabase[req.params.shortURL].longURL = prefixURLIfNeeded(req.body.longURLedit);
   res.redirect("/urls");
 });
 
@@ -122,7 +142,7 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  if (doesUserExistbyEmail(req.body.email) === false) {
+  if (!doesUserExistbyEmail(req.body.email)) {
     return res.status(403).send("A user with this email address does not exist.");
   }
   for (let user in users) {
@@ -140,6 +160,7 @@ app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
+// req.session = null
 
 app.get("/register", (req, res) => {
   const templateVars = {
