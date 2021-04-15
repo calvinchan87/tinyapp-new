@@ -11,8 +11,14 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "user2RandomID"
+  }
 };
 
 const users = {
@@ -21,7 +27,7 @@ const users = {
     email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
+  "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
@@ -48,7 +54,10 @@ const doesUserExistbyEmail = function(value) {
   return false;
 };
 
-app.get("/urls/new", (req, res) => {
+app.get("/urls/new", (req, res) => { // Only Registered Users Can Shorten URLs
+  if (users[req.cookies.user_id] === undefined) {
+    return res.redirect("/login");
+  }
   const templateVars = {
     user: users[req.cookies.user_id]
   };
@@ -58,13 +67,16 @@ app.get("/urls/new", (req, res) => {
 // Responds with a redirection to /urls/:shortURL, where shortURL is the random string we generated
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString(6);
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: "user2RandomID" // Only Registered Users Can Shorten URLs
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
 // Redirect Short URLs
 app.get("/u/:shortURL", (req, res) => {
-  let longURL = urlDatabase[req.params.shortURL];
+  let longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -81,7 +93,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: users[req.cookies.user_id],
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]
+    longURL: urlDatabase[req.params.shortURL].longURL
   };
   res.render("urls_show", templateVars);
 });
@@ -93,7 +105,7 @@ app.post("/urls/:shortURL", (req, res) => {
   if (req.body.longURLedit.substr(0, prefixOne.length) !== prefixOne && req.body.longURLedit.substr(0, prefixTwo.length) !== prefixTwo) {
     req.body.longURLedit = prefixOne + req.body.longURLedit;
   }
-  urlDatabase[req.params.shortURL] = req.body.longURLedit;
+  urlDatabase[req.params.shortURL].longURL = req.body.longURLedit;
   res.redirect("/urls");
 });
 
