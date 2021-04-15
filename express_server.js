@@ -15,6 +15,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
 // Function logic from https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 const generateRandomString = function(length) {
   let result = [];
@@ -28,7 +41,7 @@ const generateRandomString = function(length) {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"]
+    user: users[req.cookies.user_id]
   };
   res.render("urls_new", templateVars);
 });
@@ -49,7 +62,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"],
+    user: users[req.cookies.user_id],
     urls: urlDatabase
   };
   res.render("urls_index", templateVars);
@@ -58,10 +71,11 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"],
+    user: users[req.cookies.user_id],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]
   };
+  console.log(templateVars.user)
   res.render("urls_show", templateVars);
 });
 // Also include a link (href='#') for creating a new url.
@@ -82,20 +96,33 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  res.cookie("user_id", req.body.username);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"]
+    user: users[req.cookies.user_id]
   };
   res.render("urls_register", templateVars);
+});
+
+app.post("/register", (req, res) => {
+  console.log(users)
+  let userID = generateRandomString(6);
+  users[userID] = {
+    id: userID, 
+    email: req.body.email, 
+    password: req.body.password
+  }
+  console.log(users)
+  res.cookie("user_id", userID);
+  res.redirect("/urls");
 });
 
 app.get("/", (req, res) => {
