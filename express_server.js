@@ -39,6 +39,15 @@ const generateRandomString = function(length) {
   return result.join("");
 };
 
+const doesUserExistbyEmail = function(value) {
+  for (let key in users) {
+    if (users[key].email === value) {
+      return true;
+    }
+  }
+  return false;
+}
+
 app.get("/urls/new", (req, res) => {
   const templateVars = { 
     user: users[req.cookies.user_id]
@@ -48,7 +57,6 @@ app.get("/urls/new", (req, res) => {
 
 // Responds with a redirection to /urls/:shortURL, where shortURL is the random string we generated
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
   let shortURL = generateRandomString(6);
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
@@ -75,7 +83,6 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]
   };
-  console.log(templateVars.user)
   res.render("urls_show", templateVars);
 });
 // Also include a link (href='#') for creating a new url.
@@ -113,14 +120,18 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  console.log(users)
+  if (req.body.email === "" || req.body.password === "") {
+    return res.sendStatus(400);
+  };
+  if (doesUserExistbyEmail(req.body.email) === true) {
+    return res.sendStatus(400);
+  };
   let userID = generateRandomString(6);
   users[userID] = {
     id: userID, 
     email: req.body.email, 
     password: req.body.password
   }
-  console.log(users)
   res.cookie("user_id", userID);
   res.redirect("/urls");
 });
