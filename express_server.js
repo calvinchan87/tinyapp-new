@@ -47,6 +47,7 @@ const users = {
   }
 };
 
+// Display 'Create New URL' page
 app.get("/urls/new", (req, res) => {
   if (users[req.session.user_id] === undefined) {
     return res.redirect("/login");
@@ -57,7 +58,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-// Responds with a redirection to /urls/:shortURL, where shortURL is the random string we generated
+// Create new Short URL
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString(6);
   urlDatabase[shortURL] = {
@@ -67,12 +68,13 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// Redirect Short URLs
+// Redirect Short URL
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
+// Display user's URL dashboard
 app.get("/urls", (req, res) => {
   if (users[req.session.user_id] === undefined) {
     return res.status(401).send("URLs can not be displayed unless you <a href='/login'>login</a> or <a href='/register'>register</a> first.");
@@ -83,9 +85,12 @@ app.get("/urls", (req, res) => {
   };
   res.render("urls_index", templateVars);
 });
-// A link for shortening a new URL. This will be a dead link for now (href='#') as we will build the page for this functionality later.
 
+// Display 'Edit URL' page
 app.get("/urls/:shortURL", (req, res) => {
+  if (users[req.session.user_id] === undefined) {
+    return res.status(401).send("Please <a href='/login'>login</a> in order to see this page.");
+  }
   if (users[req.session.user_id].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("The details of this URL can not be accessed because it does not belong to you.");
   }
@@ -96,9 +101,12 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
-// Also include a link (href='#') for creating a new url.
 
+// Edit a Long URL
 app.post("/urls/:shortURL", (req, res) => {
+  if (users[req.session.user_id] === undefined) {
+    return res.status(401).send("Please <a href='/login'>login</a> in order to edit this URL.");
+  }
   if (users[req.session.user_id].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("This URL can not be edited because it does not belong to you.");
   }
@@ -106,7 +114,11 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
+// Delete a Short URL
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (users[req.session.user_id] === undefined) {
+    return res.status(401).send("Please <a href='/login'>login</a> in order to delete this URL.");
+  }
   if (users[req.session.user_id].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("This URL can not be deleted because it does not belong to you.");
   }
@@ -163,15 +175,14 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (users[req.session.user_id] === undefined) {
+    return res.redirect("/login");
+  }
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.listen(PORT, () => {
