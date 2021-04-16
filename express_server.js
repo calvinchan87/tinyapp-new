@@ -79,7 +79,7 @@ app.get("/urls", (req, res) => {
   }
   const templateVars = {
     user: users[req.session.user_id],
-    urls: urlsForUser(users[req.session.user_id].id)
+    urls: urlsForUser(users[req.session.user_id].id, urlDatabase)
   };
   res.render("urls_index", templateVars);
 });
@@ -123,7 +123,7 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   let retrievedUser = getUserByEmail(req.body.email, users);
-  if (retrievedUser === false) {
+  if (retrievedUser === undefined) {
     return res.status(403).send("A user with this email address does not exist.");
   }
   if (bcrypt.compareSync(req.body.password, users[retrievedUser].password)) {

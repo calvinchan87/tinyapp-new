@@ -18,11 +18,12 @@ const prefixURLIfNeeded = function(url) {
   return url;
 };
 
-const urlsForUser = function(id) {
+// ReferenceError: urlDatabase is not defined
+const urlsForUser = function(id, database) {
   let urlDatabaseUserSpecific = {};
-  for (url in urlDatabase) {
-    if (urlDatabase[url].userID === id) {
-      urlDatabaseUserSpecific[url] = urlDatabase[url];
+  for (url in database) {
+    if (database[url].userID === id) {
+      urlDatabaseUserSpecific[url] = database[url];
     }
   }
   return urlDatabaseUserSpecific;
@@ -34,7 +35,6 @@ const getUserByEmail = function(email, database) {
       return user;
     }
   }
-  return false;
 };
 
 module.exports = { generateRandomString, prefixURLIfNeeded, urlsForUser, getUserByEmail };
