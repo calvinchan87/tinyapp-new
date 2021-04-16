@@ -60,6 +60,9 @@ app.get("/urls/new", (req, res) => {
 
 // Create new Short URL
 app.post("/urls", (req, res) => {
+  if (users[req.session.user_id] === undefined) {
+    return res.status(401).send("Please <a href='/login'>login</a> or <a href='/register'>register</a> in order to create a new Short URL.");
+  }
   let shortURL = generateRandomString(6);
   urlDatabase[shortURL] = {
     longURL: prefixURLIfNeeded(req.body.longURL),
