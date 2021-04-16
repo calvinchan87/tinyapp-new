@@ -16,12 +16,12 @@ app.use(cookieSession({
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(10);
 
-const { 
+const {
   generateRandomString,
   prefixURLIfNeeded,
   urlsForUser,
   getUserByEmail
-} = require('./helpers')
+} = require('./helpers');
 
 const urlDatabase = {
   "b2xVn2": {
